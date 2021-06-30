@@ -1,11 +1,14 @@
+ARG fuzzy_image=verificarlo/fuzzy:v0.5.0-lapack
+FROM ${fuzzy_image} as fuzzy
+
 FROM fcpindi/c-pac:latest
 
 # Copy libmath fuzzy environment from fuzzy image
-COPY --from=verificarlo/fuzzy:v0.5.0-lapack /opt/mca-libmath/* /opt/mca-libmath/
-COPY --from=verificarlo/fuzzy:v0.5.0-lapack /opt/vfc-backends.txt /opt/
-COPY --from=verificarlo/fuzzy:v0.5.0-lapack /usr/local/bin/verificarlo* /usr/local/bin/
-COPY --from=verificarlo/fuzzy:v0.5.0-lapack /usr/local/include/vfcwrapper.c /usr/local/include/
-COPY --from=verificarlo/fuzzy:v0.5.0-lapack /usr/local/lib/libinterflop* /usr/local/lib/
+COPY --from=fuzzy /opt/mca-libmath/* /opt/mca-libmath/
+COPY --from=fuzzy /opt/vfc-backends.txt /opt/
+COPY --from=fuzzy /usr/local/bin/verificarlo* /usr/local/bin/
+COPY --from=fuzzy /usr/local/include/vfcwrapper.c /usr/local/include/
+COPY --from=fuzzy /usr/local/lib/libinterflop* /usr/local/lib/
 
 ENV LIB_WRAP=/opt/mca-libmath/libmath.so
 ENV LD_PRELOAD="${LIB_WRAP}"
