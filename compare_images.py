@@ -7,6 +7,22 @@ import nibabel as nib
 import pandas as pd
 import numpy as np
 
+import os.path as op
+import os
+
+
+def subject(fname):
+    fn = op.basename(fname).split('_')[0].split('-')[1]
+    return fn
+
+
+def space(fname):
+    fn = op.basename(fname).split('run-1')[1].split('desc-')[0].strip('_')
+    if fn.startswith('space-'):
+        return fn[6:]
+    else:
+        return 'native'
+
 
 def difference(im1, im2, verbose=True):
     # Compare headers and affines
@@ -44,7 +60,7 @@ def difference(im1, im2, verbose=True):
         meandif = 0
         maxdif = 0
 
-    return [headers, affine, identical, pearson,
+    return [headers, affines, identical, pearson,
             euc, mindif, meandif, maxdif]
 
 
@@ -52,30 +68,39 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("output")
     parser.add_argument("images", nargs="+")
+    parser.add_argument("-v", "--verbose", action="store_true")
 
     args = parser.parse_args()
     output = args.output
     image_files = args.images
+    verbose = args.verbose
+
     if image_files[0].endswith('.txt'):
         with open(image_files[0]) as fhandle:
-            image_files = fhandle.readlines()
-    print(image_files)
-    return -1
-
-    # Create a couple of LUTs, to make life easier
-    lut = {}
-    tul = {}
-    for i, _im in enumerate(image_files):
-        lut[i] = _im
-        tul[_im] = i
+            tmp = fhandle.read().split('\n')
+            image_files = [t for t in tmp if len(t) > 1]
 
     result_dicts = []
-    for _i in lut:
+    for _i in image_files:
         im_i = nib.load(_i)
-        for _j in lut
-            im_j = nib.load(_j)
+        for _j in image_files: 
+            # Compare spaces
+            id_i, id_j = subject(_i), subject(_j)
+            s_i, s_j = space(_i), space(_j)
 
-            results = difference(im_i, im_j)
+            # Extract simulation conditions and only compare within condition
+            # Label things as w/in sub, cross sub
+
+            # Skip dis-similar images
+            if s_i != s_j or (s_i == 'native' and id_i != id_j):
+                continue
+
+            im_j = nib.load(_j)
+            if verbose:
+                print("Comparing:\n\t{0}\n\t\tAND\n\t{1}".format(_i, _j))
+
+            # If the results are in the same space, compare them
+            results = difference(im_i, im_j, verbose=verbose)
 
             tmpdict = {
                 "im1": _i,
@@ -94,7 +119,7 @@ def main():
 
 
     df = pd.DataFrame.from_dict(result_dicts)
-    pd.to_csv(df, output)
+    df.to_csv(output)
 
 
 if __name__ == "__main__":
