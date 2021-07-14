@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 import os.path as op
+import pprint
 import os
 
 
@@ -15,6 +16,11 @@ def subject(fname):
     fn = op.basename(fname).split('_')[0].split('-')[1]
     return fn
 
+
+def deriv(fname):
+    fn = op.basename(fname).split('desc-')[1].split('.')[0]
+    return fn
+    
 
 def space(fname):
     fn = op.basename(fname).split('run-1')[1].split('desc-')[0].strip('_')
@@ -25,7 +31,7 @@ def space(fname):
 
 
 def mcacond(fname, substr='cpac_'):
-    fn = op.split(substr)[1].split('/')[:2]
+    fn = fname.split(substr)[1].split('/')[:2]
     if fn[0] == 'ieee':
         sp = 1
         pr = -1
@@ -69,7 +75,7 @@ def main():
     parser.add_argument("output")
     parser.add_argument("images", nargs="+")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-s", "--substr", action="store", default="cpac_mca")
+    parser.add_argument("-s", "--substr", action="store", default="cpac")
 
     args = parser.parse_args()
     output = args.output
@@ -83,6 +89,9 @@ def main():
             image_files = [t for t in tmp if len(t) > 1]
 
     result_dicts = []
+    if verbose:
+        print("Number of images: {0}".format(len(image_files)))
+
     for _idx, _i in enumerate(image_files):
         im_i = nib.load(_i)
         for _jdx, _j in enumerate(image_files[_idx:]):
@@ -92,9 +101,7 @@ def main():
             s_i, s_j = space(_i), space(_j)
             sp_i, pr_i, n_i = mcacond(_i, substr)
             sp_j, pr_j, n_j = mcacond(_j, substr)
-
-            # Extract simulation conditions and only compare within condition
-            # Label things as w/in sub, cross sub
+            de_i, de_j = deriv(_i), deriv(_j)
 
             # We want to compare... 
             if ((pr_i == pr_j or                     # Within precisions.... 
@@ -102,21 +109,24 @@ def main():
                 (sp_i == sp_j or                     # Within sparsities....
                  sp_i == -1 or sp_j == -1) and       #  ...Except IEEE + any
                 (id_i == id_j or                     # Within subjects...
-                 (s_i == s_j and s_i != 'native'))): #  ...Except in same space
-               pass
+                 (s_i == s_j and s_i == 'template')) and #  ...Except aligned
+                (s_i == s_j) and                     # Within space
+                (de_i == de_j)):                     # Within derivative
+                if verbose:
+                    print("[{0}, {1}]: Comparing files".format(_idx, _jdx))
             else:
+                if verbose:
+                    print("[{0}, {1}]: Not comparing files".format(_idx, _jdx))
                 continue
 
-            im_j = nib.load(_j)
-            if verbose:
-                print("Comparing:\n\t{0}\n\t\tAND\n\t{1}".format(_i, _j))
-
             # If the results are in the same space, compare them
+            im_j = nib.load(_j)
             results = difference(im_i, im_j, verbose=verbose)
 
             tmpdict = {
                 "images": (_i, _j),
                 "subjects": (id_i, id_j),
+                "derivative": de_i,
                 "within subject": id_i == id_j,
                 "space": s_i,
                 "sparsity": sp_i,
@@ -132,7 +142,7 @@ def main():
             }
 
             if verbose:
-                print(tmpdict)
+                pprint.pprint(tmpdict)
 
             result_dicts += [tmpdict]
             del tmpdict
