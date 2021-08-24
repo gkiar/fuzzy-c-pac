@@ -59,7 +59,7 @@ singularity run \\
       -B ${dp}:${dp} \\
       -B ${op}:${op} \\
       --env VFC_BACKENDS_FROM_FILE=${op}/vfcbackend.txt \\
-      fuzzy-cpac.sif \\
+      ~/images/fuzzy-cpac.sif \\
       ${dp} \\
       ${op}/mca-${i}/ \\
       participant \\
@@ -68,8 +68,17 @@ singularity run \\
       --preconfig preproc \\
       --n_cpus 7 \\
       --mem_gb 14
+
+singularity run \\
+      -B ${PWD}:${PWD} \\
+      -B ${dp}:${dp} \\
+      -B ${op}:${op} \\
+      --env VFC_BACKENDS_FROM_FILE=${op}/vfcbackend.txt \\
+      ~/images/fuzzy-cpac.sif \\
+      connectivity_scripts.... #TODO: this
+
 EOF
 
   chmod +x ${op}/eval-${i}/script.sh  
-  sbatch ${op}/eval-${i}/script.sh --time=2:00:00 --mem=14000 --mincpus=7
+  sbatch ${op}/eval-${i}/script.sh -t 2:00:00 -p RM-shared -n 7
 done

@@ -75,7 +75,7 @@ def main():
     parser.add_argument("output")
     parser.add_argument("images", nargs="+")
     parser.add_argument("-v", "--verbose", action="store_true")
-    parser.add_argument("-s", "--substr", action="store", default="cpac")
+    parser.add_argument("-s", "--substr", action="store", default="cpac_")
 
     args = parser.parse_args()
     output = args.output
