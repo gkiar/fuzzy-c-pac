@@ -10,5 +10,6 @@ tmpout=/tmp/$(basename ${outp})_means.1D
 /jet/home/gkiar/images/afni/1dtranspose ${tmpout}2 > ${tmpout}
 
 python -c "import CPAC.connectome.pipeline as cc; cc.compute_correlation('${tmpout}', 'PearsonCorr')"
+python -c "import numpy as np; d=np.load('correlation_connectome.npy'); np.savetxt('${outp}', d)"
 
-mv correlation_connectome.npy ${outp}
+rm correlation_connectome.npy

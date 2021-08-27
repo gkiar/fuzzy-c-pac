@@ -42,6 +42,8 @@ else
   fi
 fi
 
+corr_script="/jet/home/gkiar/code/fuzzy-c-pac/code/correlation_matrices/metadriver.sh"
+
 # Print backend
 cat ${op}/vfcbackend.txt
 
@@ -50,6 +52,10 @@ do
   mkdir -p ${op}/eval-${i}
   cat > ${op}/eval-${i}/script.sh <<EOF
 #!/bin/bash
+#SBATCH -N 1
+#SBATCH -p RM-shared
+#SBATCH -t 5:00:00
+#SBATCH --ntasks-per-node=5
 
 module load singularity
 cd ${PWD}
@@ -61,24 +67,18 @@ singularity run \\
       --env VFC_BACKENDS_FROM_FILE=${op}/vfcbackend.txt \\
       ~/images/fuzzy-cpac.sif \\
       ${dp} \\
-      ${op}/mca-${i}/ \\
+      ${op}/eval-${i}/ \\
       participant \\
       --save_working_dir \\
       --skip_bids_validator \\
       --preconfig preproc \\
-      --n_cpus 7 \\
+      --n_cpus 5 \\
       --mem_gb 14
 
-singularity run \\
-      -B ${PWD}:${PWD} \\
-      -B ${dp}:${dp} \\
-      -B ${op}:${op} \\
-      --env VFC_BACKENDS_FROM_FILE=${op}/vfcbackend.txt \\
-      ~/images/fuzzy-cpac.sif \\
-      connectivity_scripts.... #TODO: this
+${corr_script} ${op} eval-${i}
 
 EOF
 
   chmod +x ${op}/eval-${i}/script.sh  
-  sbatch ${op}/eval-${i}/script.sh -t 2:00:00 -p RM-shared -n 7
+  sbatch ${op}/eval-${i}/script.sh
 done

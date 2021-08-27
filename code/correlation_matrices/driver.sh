@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
-derivdir="/ocean/projects/cis210040p/gkiar/data/ABIDE_NYU/derivatives/"
+derivdir=$1
+# derivdir="/ocean/projects/cis210040p/gkiar/data/ABIDE_NYU/derivatives/"
 pattern="*space-template*cleaned*nii.gz"
-sublist="./preproc_bold.txt"
-pardir="./Schaefer"
+
+bp="/ocean/projects/cis210040p/gkiar/code/fuzzy-c-pac/code/correlation_matrices"
+sublist="${derivdir}/cleaned_bold.txt"
+proclist="${derivdir}/correlations.txt"
+pardir="${bp}/Schaefer"
 
 if [ ! -f ${sublist} ]
 then
@@ -21,12 +25,13 @@ do
   do
     for imp in ${implementations}
     do
-      echo ${line}
       pfil=${pardir}/$(ls ${pardir} | grep ${parc})
-      echo ${pfil}
-      script=./${imp}/
-      echo ${line/bold.nii.gz/parc-Schaeffer${parc}_corr-${imp}.mat}
+      script=${bp}/${imp}/driver.sh
+      outp=${line/bold.nii.gz/parc-Schaeffer${parc}_corr-${imp}.mat}
+
+      ${script} ${pfil} ${line} ${outp}
+      echo "${outp}" >> ${proclist}
     done
   done
-  break
 done < "${sublist}"
+
