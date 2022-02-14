@@ -1,7 +1,7 @@
-ARG fuzzy_image=verificarlo/fuzzy:v0.5.0-lapack
+ARG fuzzy_image=verificarlo/fuzzy:v0.6.0-lapack
 FROM ${fuzzy_image} as fuzzy
 
-FROM fcpindi/c-pac:release-v1.8.2
+FROM fcpindi/c-pac:release-v1.8.3
 
 # Copy libmath fuzzy environment from fuzzy image
 COPY --from=fuzzy /opt/mca-libmath/* /opt/mca-libmath/
