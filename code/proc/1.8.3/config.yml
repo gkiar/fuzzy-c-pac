@@ -1,0 +1,24 @@
+%YAML 1.1
+---
+# CPAC Pipeline Configuration YAML file
+# Version 1.8.2
+#
+# http://fcp-indi.github.io for more info.
+#
+# Pipeline config "Default", version GUI-0
+# Fri Dec 10 2021 15:50:24 GMT-0500 (Eastern Standard Time)
+#
+# Tip: This file can be edited manually with a text editor for quick modifications.
+
+FROM: abcd-options
+
+pipeline_setup:
+  system_config:
+    maximum_memory_per_participant: 14
+    max_cores_per_participant: 7
+    num_ants_threads: 2
+    num_OMP_threads: 2
+    num_participants_at_once: 4
+  Debugging:
+    verbose: true
+
