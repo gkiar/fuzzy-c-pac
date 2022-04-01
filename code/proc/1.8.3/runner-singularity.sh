@@ -4,7 +4,7 @@
 dp=$1       # 1: Dataset path            =/path/to/data
 op=$2       # 2: Output path             =/path/to/results
 mode=$3     # 3: MCA mode                ={ieee, mca}
-numb=$4     # 4: Number of runs         >=1
+numb=$4     # 4: Number of runs         >=0
 spar=$5     # 5: Sparsity                =(0, 1]
 prec=$6     # 6: Reduction in precision >=0
 
@@ -45,36 +45,53 @@ fi
 # Print backend
 cat ${op}/vfcbackend.txt
 
-for i in `seq 0 ${numb}`;
+if iters=`seq 0 ${numb}`;
+then
+  echo Number of iterations: ${numb}
+else
+  iters=${numb}
+  echo Number of iterations: 1
+fi
+
+for i in $iters;
 do
   mkdir -p ${op}/eval-${i}
   cat > ${op}/eval-${i}/script.sh <<EOF
 #!/bin/bash
 #SBATCH -N 1
 #SBATCH -p RM-shared
-#SBATCH -t 23:00:00
-#SBATCH --ntasks-per-node=8
+#SBATCH -t 1:00:00
+#SBATCH --ntasks-per-node=3
 
 cd ${PWD}
 
-singularity run \\
+singularity exec \\
       -B ${PWD}:${PWD} \\
       -B ${dp}:${dp} \\
       -B ${op}:${op} \\
-      -B ~/code/C-PAC/CPAC/utils/bids_utils.py:/code/CPAC/utils/bids_utils.py \\
+      -B ~/code/C-PAC/CPAC/:/code/CPAC/ \\
+      -B ~/code/C-PAC/dev/docker_data/run.py:/code/CPAC/run.py \\
+      -B ~/code/C-PAC/dev/docker_data/run.py:/cpac_resources/run.py \\
+      -B ~/code/C-PAC/dev/docker_data/default_pipeline.yml:/cpac_resources/default_pipeline.yml \\
       --env VFC_BACKENDS_FROM_FILE=${op}/vfcbackend.txt \\
       ~/shared_data/singularity_images/fuzzy-cpac-1.8.3.sif \\
+      /code/CPAC/run.py \\
       ${dp} \\
       ${op}/eval-${i}/ \\
       participant \\
-      --save_working_dir \\
       --skip_bids_validator \\
-      --pipeline_file ${PWD}/config.yml \\
-      --n_cpus 8 \\
-      --mem_gb 16
+      --save_working_dir \\
+      --pipeline_file ${PWD}/minimal.yml \\
+      --participant_label 0050952\\
+      --n_cpus 2 \\
+      --mem_gb 6 \\
+      --runtime_usage ${PWD}/callback.log \\
+      --runtime_buffer 5
 
 EOF
 
   chmod +x ${op}/eval-${i}/script.sh  
-  sbatch ${op}/eval-${i}/script.sh
+  # sbatch ${op}/eval-${i}/script.sh
+  cat ${op}/eval-${i}/script.sh
+  echo ${op}/eval-${i}/script.sh
 done

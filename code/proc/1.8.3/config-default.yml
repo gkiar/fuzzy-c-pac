@@ -10,15 +10,11 @@
 #
 # Tip: This file can be edited manually with a text editor for quick modifications.
 
-FROM: abcd-options
+FROM: default
 
 pipeline_setup:
   system_config:
-    maximum_memory_per_participant: 14
-    max_cores_per_participant: 7
-    num_ants_threads: 2
-    num_OMP_threads: 2
-    num_participants_at_once: 4
+    raise_insufficient: Off
   Debugging:
     verbose: true
 
